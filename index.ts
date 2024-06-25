@@ -16,21 +16,23 @@ enum RawTile {
 
 interface Tile {
   isAir(): boolean;
-  isFlux(): boolean;
-  isUnbreakable(): boolean;
-  isPlayer(): boolean;
+  //isFlux(): boolean;
+  //isUnbreakable(): boolean;
+  //isPlayer(): boolean;
   isStone(): boolean;
   isFallingStone(): boolean;
   isBox(): boolean;
   isFallingBox(): boolean;
-  isKey1(): boolean;
+  //isKey1(): boolean;
   isLock1(): boolean;
-  isKey2(): boolean;
+  //isKey2(): boolean;
   isLock2(): boolean;
   color(g: CanvasRenderingContext2D): void;
   draw(g: CanvasRenderingContext2D, x: number, y: number): void;
-  isEdible(): boolean;
-  isPushable(): boolean;
+  //isEdible(): boolean;
+  //isPushable(): boolean;
+  moveHorizontal(dx: number): void;
+  moveVertical(dy: number): void;
 }
 
 class Air implements Tile {
@@ -55,6 +57,12 @@ class Air implements Tile {
   }
   isPushable(): boolean {
     return false;
+  }
+  moveHorizontal(dx: number): void {
+    moveToTile(playerx + dx, playery);
+  }
+  moveVertical(dy: number): void {
+    moveToTile(playerx, playery + dy);
   }
 }
 
@@ -84,6 +92,12 @@ class Flux implements Tile {
   isPushable(): boolean {
     return false;
   }
+  moveHorizontal(dx: number): void {
+    moveToTile(playerx + dx, playery);
+  }
+  moveVertical(dy: number): void {
+    moveToTile(playerx, playery + dy);
+  }
 }
 
 class Unbreakable implements Tile {
@@ -112,6 +126,10 @@ class Unbreakable implements Tile {
   isPushable(): boolean {
     return false;
   }
+  moveHorizontal(dx: number): void {
+  }
+  moveVertical(dy: number): void {
+  }
 }
 
 class Player implements Tile {
@@ -136,6 +154,10 @@ class Player implements Tile {
   }
   isPushable(): boolean {
     return false;
+  }
+  moveHorizontal(dx: number): void {
+  }
+  moveVertical(dy: number): void {
   }
 }
 
@@ -165,6 +187,15 @@ class Stone implements Tile {
   isPushable(): boolean {
     return true;
   }
+  moveHorizontal(dx: number): void {
+    if (map[playery][playerx + dx + dx].isAir()
+      && !map[playery + 1][playerx + dx].isAir()) {
+      map[playery][playerx + dx + dx] = this;
+      moveToTile(playerx + dx, playery);
+    }
+  }
+  moveVertical(dy: number): void {
+  }
 }
 
 class FallingStone implements Tile {
@@ -192,6 +223,10 @@ class FallingStone implements Tile {
   }
   isPushable(): boolean {
     return false;
+  }
+  moveHorizontal(dx: number): void {
+  }
+  moveVertical(dy: number): void {
   }
 }
 
@@ -221,6 +256,15 @@ class Box implements Tile {
   isPushable(): boolean {
     return true;
   }
+  moveHorizontal(dx: number): void {
+    if (map[playery][playerx + dx + dx].isAir()
+      && !map[playery + 1][playerx + dx].isAir()) {
+      map[playery][playerx + dx + dx] = map[playery][playerx + dx];
+      moveToTile(playerx + dx, playery);
+    } 
+  }
+  moveVertical(dy: number): void {
+  }
 }
 
 class FallingBox implements Tile {
@@ -249,6 +293,10 @@ class FallingBox implements Tile {
   isPushable(): boolean {
     return false;
   }
+  moveHorizontal(dx: number): void {
+  }
+  moveVertical(dy: number): void {
+  }
 }
 
 class Key1 implements Tile {
@@ -276,6 +324,13 @@ class Key1 implements Tile {
   }
   isPushable(): boolean {
     return false;
+  }moveHorizontal(dx: number): void {
+      removeLock1();
+      moveToTile(playerx + dx, playery);
+  }
+  moveVertical(dy: number): void {
+      removeLock1();
+      moveToTile(playerx, playery + dy);
   }
 }
 
@@ -305,6 +360,10 @@ class Lock1 implements Tile {
   isPushable(): boolean {
     return false;
   }
+  moveHorizontal(dx: number): void {
+  }
+  moveVertical(dy: number): void {
+  }
 }
 
 class Key2 implements Tile {
@@ -333,6 +392,14 @@ class Key2 implements Tile {
   isPushable(): boolean {
     return false;
   }
+  moveHorizontal(dx: number): void {
+    removeLock2();
+    moveToTile(playerx + dx, playery);
+  }
+  moveVertical(dy: number): void {
+    removeLock2();
+    moveToTile(playerx, playery + dy);
+  }
 }
 
 class Lock2 implements Tile {
@@ -360,6 +427,10 @@ class Lock2 implements Tile {
   }
   isPushable(): boolean {
     return false;
+  }
+  moveHorizontal(dx: number): void {
+  }
+  moveVertical(dy: number): void {
   }
 }
 
@@ -488,33 +559,11 @@ function moveToTile(newx: number, newy: number) {
 }
 
 function moveHorizontal(dx: number) {
-  if (map[playery][playerx + dx].isEdible()) {
-    moveToTile(playerx + dx, playery);
-  } else if ((map[playery][playerx + dx].isPushable())
-    && map[playery][playerx + dx + dx].isAir()
-    && !map[playery + 1][playerx + dx].isAir()) {
-    map[playery][playerx + dx + dx] = map[playery][playerx + dx];
-    moveToTile(playerx + dx, playery);
-  } else if (map[playery][playerx + dx].isKey1()) {
-    removeLock1();
-    moveToTile(playerx + dx, playery);
-  } else if (map[playery][playerx + dx].isKey2()) {
-    removeLock2();
-    moveToTile(playerx + dx, playery);
-  }
+  map[playery][playerx + dx].moveHorizontal(dx);
 }
 
 function moveVertical(dy: number) {
-  if (map[playery + dy][playerx].isFlux()
-    || map[playery + dy][playerx].isAir()) {
-    moveToTile(playerx, playery + dy);
-  } else if (map[playery + dy][playerx].isKey1()) {
-    removeLock1();
-    moveToTile(playerx, playery + dy);
-  } else if (map[playery + dy][playerx].isKey2()) {
-    removeLock2();
-    moveToTile(playerx, playery + dy);
-  }
+  map[playery + dy][playerx].moveVertical(dy);
 }
 
 function update() {
