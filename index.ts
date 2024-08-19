@@ -178,9 +178,11 @@ class Stone implements Tile {
 }
 
 class Box implements Tile {
+  constructor(private falling: FallingState) {
+  }
   isAir() { return false; }
   isFallingStone() { return false; }
-  isFallingBox() { return false; }
+  isFallingBox() { return this.falling.isFalling(); }
   isLock1() { return false; }
   isLock2() { return false; }
   color(g: CanvasRenderingContext2D) {
@@ -191,36 +193,7 @@ class Box implements Tile {
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
   }
   moveHorizontal(dx: number): void {
-    if (map[playery][playerx + dx + dx].isAir()
-      && !map[playery + 1][playerx + dx].isAir()) {
-      map[playery][playerx + dx + dx] = map[playery][playerx + dx];
-      moveToTile(playerx + dx, playery);
-    } 
-  }
-  moveVertical(dy: number): void {
-  }
-  isStony(): boolean {
-    return false;
-  }
-  isBoxy(): boolean {
-    return true;
-  }
-}
-
-class FallingBox implements Tile {
-  isAir() { return false; }
-  isFallingStone() { return false; }
-  isFallingBox() { return true; }
-  isLock1() { return false; }
-  isLock2() { return false; }
-  color(g: CanvasRenderingContext2D) {
-    g.fillStyle = "#8b4513";
-  }
-  draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#8b4513";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-  }
-  moveHorizontal(dx: number): void {
+    this.falling.moveHorizontal(this, dx);
   }
   moveVertical(dy: number): void {
   }
@@ -395,8 +368,8 @@ function transformTile(tile: RawTile) {
     case RawTile.UNBREAKABLE: return new Unbreakable();
     case RawTile.STONE: return new Stone(new Resting());
     case RawTile.FALLING_STONE: return new Stone(new Falling());
-    case RawTile.BOX: return new Box();
-    case RawTile.FALLING_BOX: return new FallingBox();
+    case RawTile.BOX: return new Box(new Resting());
+    case RawTile.FALLING_BOX: return new Box(new Falling());
     case RawTile.FLUX: return new Flux();
     case RawTile.KEY1: return new Key1();
     case RawTile.LOCK1: return new Lock1();
@@ -479,12 +452,12 @@ function updateTile(x: number, y: number) {
     map[y][x] = new Air();
   } else if ((map[y][x].isBoxy())
     && map[y + 1][x].isAir()) {
-    map[y + 1][x] = new FallingBox();
+    map[y + 1][x] = new Box(new Falling());
     map[y][x] = new Air();
   } else if (map[y][x].isFallingStone()) {
     map[y][x] = new Stone(new Resting());
   } else if (map[y][x].isFallingBox()) {
-    map[y][x] = new Box();
+    map[y][x] = new Box(new Resting());
   }
 }
 
